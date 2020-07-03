@@ -14,8 +14,10 @@
 
   console.log('=== v2 block ===');
 
-  const STORAGE_LINK_TEXT = 'v2_menu_block_lint_text';
-  let blockedLinkTexts = getLink().linkTexts;
+  // ********** 初始化逻辑 **********
+
+  const STORAGE_LINKS = 'v2_menu_block_links';
+  let blockedLinks = getLink().links;
   hideListItem();
 
   // 菜单
@@ -31,6 +33,7 @@
     href: '',
     left: -999,
     top: -999,
+    linkPath: '',
     linkText: '',
     visible: false,
   };
@@ -41,17 +44,22 @@
   document.body.appendChild(overlay);
 
   appendStyle();
-  console.log('blocked links:', blockedLinkTexts)
+  console.log('blocked links:', blockedLinks);
+
+  // ********** 监听事件 **********
 
   document.addEventListener('contextmenu', function(e) {
     const el = e.target;
     if (el.tagName.toUpperCase() === 'A' && el.className === 'topic-link') {
       e.preventDefault();
+      const href = el.getAttribute('href');
+      const linkPath = getPathFormHref(href);
       updateState({
         visible: true,
-        href: el.href,
+        href,
         left: e.clientX,
         top: e.clientY,
+        linkPath,
         linkText: el.textContent,
       });
     }
@@ -63,12 +71,24 @@
 
   document.querySelector('#v2-menu-block').addEventListener('click', function() {
     const {
-      linkText
+      linkPath,
+      linkText,
     } = menuState;
-    saveLink(linkText);
+    saveLink({
+      path: linkPath,
+      text: linkText,
+    });
     hideListItem();
     resetState();
   });
+
+  document.querySelector('#v2-menu-unblock').addEventListener('click', function() {
+    clearLink();
+    // TODO: 刷新页面，比较粗暴，需要优化
+    location.reload();
+  });
+
+  // ********** 定义函数 **********
 
   function resetState() {
     updateState({
@@ -77,12 +97,6 @@
       linkText: '',
     });
   }
-
-  document.querySelector('#v2-menu-unblock').addEventListener('click', function() {
-    clearLink();
-    // TODO: 刷新页面，比较粗暴，需要优化
-    location.reload();
-  });
 
   function appendStyle() {
     const styleEl = document.createElement('style');
@@ -124,6 +138,10 @@
     document.querySelector('head').appendChild(styleEl);
   }
 
+  /**
+   * 更新状态
+   * @param {object} state 需要更新的状态字段
+   */
   function updateState(state = {}) {
     Object.assign(menuState, state);
 
@@ -160,34 +178,41 @@
     const items = document.querySelectorAll('#Main .cell.item');
     for (let item of items) {
       const topic = item.querySelector('.topic-link');
-      if (blockedLinkTexts.indexOf(topic.textContent) > -1) {
+      if (blockedLinks.find(link => link.path === getPathFormHref(topic.getAttribute('href')))) {
         item.remove();
-        break;
       }
     }
   }
 
-  function saveLink(linkText) {
-    const data = JSON.parse(GM_getValue(STORAGE_LINK_TEXT, '{}'));
-    data.linkTexts = data.linkTexts || [];
-    const set = new Set(data.linkTexts);
-    set.add(linkText);
-    data.linkTexts = [...set];
-    blockedLinkTexts = data.linkTexts;
-    GM_setValue(STORAGE_LINK_TEXT, JSON.stringify(data));
+  function saveLink(link = { path: '', text: '' }) {
+    const data = JSON.parse(GM_getValue(STORAGE_LINKS, '{}'));
+    data.links = data.links || [];
+    const links = data.links;
+    const isAlreadyIn = links.findIndex(item => item.path === link.path) > -1;
+    if (isAlreadyIn) return;
+    links.push(link);
+    blockedLinks = data.links;
+    GM_setValue(STORAGE_LINKS, JSON.stringify(data));
   }
 
   function getLink() {
-    const data = JSON.parse(GM_getValue(STORAGE_LINK_TEXT, '{}'));
-    data.linkTexts = data.linkTexts || [];
+    const data = JSON.parse(GM_getValue(STORAGE_LINKS, '{}'));
+    data.links = data.links || [];
     return data;
   }
 
   function clearLink() {
     const data = {};
-    data.linkTexts = [];
-    blockedLinkTexts = data.linkTexts;
-    GM_setValue(STORAGE_LINK_TEXT, JSON.stringify(data));
+    data.links = [];
+    blockedLinks = data.links;
+    GM_setValue(STORAGE_LINKS, JSON.stringify(data));
   }
+
+  function getPathFormHref(href = '') {
+    return href.split('#')[0];
+  }
+
+  window.getLink = getLink;
+  window.clearLink = clearLink;
 
 })();
