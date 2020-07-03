@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         V2Block
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  在 V 站屏蔽某个帖子
 // @author       hudidit
 // @match        https://v2ex.com/*
