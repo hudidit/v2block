@@ -212,7 +212,4 @@
     return href.split('#')[0];
   }
 
-  window.getLink = getLink;
-  window.clearLink = clearLink;
-
 })();
