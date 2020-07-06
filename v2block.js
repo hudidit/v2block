@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         V2Block
 // @namespace    http://tampermonkey.net/
-// @version      0.1.1
+// @version      0.1.2
 // @description  在 V 站屏蔽某个帖子
 // @author       hudidit
 // @match        https://v2ex.com/*
@@ -12,7 +12,7 @@
 (function() {
   'use strict';
 
-  console.log('=== v2 block ===');
+  console.log('[v2block]');
 
   // ********** 初始化逻辑 **********
 
@@ -44,7 +44,8 @@
   document.body.appendChild(overlay);
 
   appendStyle();
-  console.log('blocked links:', blockedLinks);
+  resetState();
+  console.log('[v2block] blocked links:', blockedLinks);
 
   // ********** 监听事件 **********
 
